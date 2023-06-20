@@ -1,3 +1,6 @@
+from datetime import datetime
+from tkinter import ttk
+
 import requests
 import tkinter as tk
 from matplotlib.figure import Figure
@@ -6,6 +9,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 class WeatherForecast:
     def __init__(self, api_key):
+        self.combobox = None
         self.radio = None
         self.root = tk.Tk()
         self.label = None
@@ -13,13 +17,21 @@ class WeatherForecast:
         self.entry = None
         self.radio_var = tk.StringVar()
         self.radio_var.set('km c')
+        self.selected_value = tk.StringVar()
+        self.selected_value.set("January")
         self.window_width = 1000
         self.window_height = 800
         self.root.geometry(f"{self.window_width}x{self.window_height}")
         self.root.title("Weather")
         self.api_key = api_key
 
-    def get_forecast_month(self, location, date):
+    def get_forecast_month(self, location, month):
+        current_month = datetime.now().month
+        if current_month >= month:
+            year = 2024
+        else:
+            year = 2023
+        date = [f"{year}-{month}-{i}" for i in range(1, 32, 1)]
         weather = {}
         for day in date:
             url = f"http://api.weatherapi.com/v1/future.json?key={self.api_key}&q={location}&dt={day}"
@@ -31,15 +43,9 @@ class WeatherForecast:
                 maxtemp_f = data['forecast']['forecastday'][0]['day']['maxtemp_f']
                 mintemp_c = data['forecast']['forecastday'][0]['day']['mintemp_c']
                 mintemp_f = data['forecast']['forecastday'][0]['day']['mintemp_f']
-                maxwind_mph = data['forecast']['forecastday'][0]['day']['maxwind_mph']
-                maxwind_kph = data['forecast']['forecastday'][0]['day']['maxwind_kph']
                 totalprecip_mm = data['forecast']['forecastday'][0]['day']['totalprecip_mm']
                 totalprecip_in = data['forecast']['forecastday'][0]['day']['totalprecip_in']
-                avgvis_km = data['forecast']['forecastday'][0]['day']['avgvis_km']
-                avgvis_miles = data['forecast']['forecastday'][0]['day']['avgvis_miles']
-                avghumidity = data['forecast']['forecastday'][0]['day']['avghumidity']
-                weather[date] = (maxtemp_c, maxtemp_f, mintemp_c, mintemp_f, maxwind_mph, maxwind_kph,
-                                 totalprecip_mm, totalprecip_in, avgvis_km, avgvis_miles, avghumidity)
+                weather[date] = (maxtemp_c, maxtemp_f, mintemp_c, mintemp_f, totalprecip_mm, totalprecip_in)
         return weather
 
     def get_forecast_day(self, location):
@@ -61,10 +67,8 @@ class WeatherForecast:
                 humidity = hour['humidity']
                 feelslike_c = hour['feelslike_c']
                 feelslike_f = hour['feelslike_f']
-                vis_km = hour['vis_km']
-                vis_miles = hour['vis_miles']
                 weather[time] = (temp_c, temp_f, wind_kph, wind_mph, pressure_mb, pressure_in, precip_in,
-                                 precip_mm, humidity, feelslike_c, feelslike_f, vis_km, vis_miles)
+                                 precip_mm, humidity, feelslike_c, feelslike_f)
         return weather
 
     def build_giu(self):
@@ -72,17 +76,17 @@ class WeatherForecast:
             widget.destroy()
 
         self.lable = tk.Label(self.root, text="Want to plan a vacation?", font=("Arial", 25, 'bold'))
-        self.lable.place(x=190, y=100)
+        self.lable.place(x=320, y=100)
 
-        self.button = tk.Button(self.root, text="No", font=("Arial", 20), command=self.weather_day)
+        self.button = tk.Button(self.root, text="No", font=("Arial", 20), command=self.weather_day_gui)
         self.button.place(x=210, y=250, width=150, height=50)
 
-        self.button = tk.Button(self.root, text="Yes", font=("Arial", 20), command=self.show_weather_month)
-        self.button.place(x=430, y=250, width=150, height=50)
+        self.button = tk.Button(self.root, text="Yes", font=("Arial", 20), command=self.weather_month_gui)
+        self.button.place(x=630, y=250, width=150, height=50)
 
         self.root.mainloop()
 
-    def weather_day(self):
+    def weather_day_gui(self):
         for widget in self.root.winfo_children():
             widget.destroy()
 
@@ -162,9 +166,82 @@ class WeatherForecast:
         canvas.draw()
         canvas.get_tk_widget().place(x=10, y=70, width=980, height=720)
 
-    def show_weather_month(self):
+    def weather_month_gui(self):
         for widget in self.root.winfo_children():
             widget.destroy()
+
+        self.button = tk.Button(self.root, text="Menu", font=("Arial", 15), command=self.build_giu)
+        self.button.place(x=840, y=10, width=150, height=50)
+
+        self.button = tk.Button(self.root, text="Show", font=("Arial", 15), command=self.show_weather_month)
+        self.button.place(x=680, y=10, width=150, height=50)
+
+        self.label = tk.Label(self.root, text="City: ", font=("Arial", 15))
+        self.label.place(x=10, y=25)
+
+        self.radio = tk.Radiobutton(self.root, text="km c", variable=self.radio_var, value='km', font=("Arial", 15))
+        self.radio.place(x=300, y=10)
+
+        self.radio = tk.Radiobutton(self.root, text="milles f", variable=self.radio_var, value='milles',
+                                    font=("Arial", 15))
+        self.radio.place(x=300, y=35)
+
+        self.entry = tk.Entry(self.root, font=("Arial", 15))
+        self.entry.place(x=60, y=25, width=220)
+
+        self.combobox = ttk.Combobox(self.root, textvariable=self.selected_value, font=("Arial", 15))
+        self.combobox['value'] = ('January', 'February', 'March', 'April', 'May', 'June',
+                                  'July', 'August', 'September', 'October', 'November', 'December')
+        self.combobox.place(x=410, y=25)
+
+    def show_weather_month(self):
+        month_dict = {
+            "January": 1,
+            "February": 2,
+            "March": 3,
+            "April": 4,
+            "May": 5,
+            "June": 6,
+            "July": 7,
+            "August": 8,
+            "September": 9,
+            "October": 10,
+            "November": 11,
+            "December": 12
+        }
+
+        month = month_dict[self.selected_value.get()]
+        location = self.entry.get()
+        data = self.get_forecast_month(location, month)
+
+        time = [d[-2:] for d in list(data.keys())]
+
+        if 'km' in self.radio_var.get():
+            maxtemp = [data.get(d)[0] for d in data]
+            mintemp = [data.get(d)[2] for d in data]
+            precip = [data.get(d)[4] for d in data]
+        else:
+            maxtemp = [data.get(d)[1] for d in data]
+            mintemp = [data.get(d)[3] for d in data]
+            precip = [data.get(d)[5] for d in data]
+
+        fig = Figure(figsize=(8, 6), dpi=80)
+        ax1 = fig.add_subplot(211)
+        ax2 = fig.add_subplot(212)
+
+        ax1.plot(time, maxtemp, color='red')
+        ax1.plot(time, mintemp, color='blue')
+        ax1.set_ylabel('Temperature')
+
+        ax2.plot(time, precip, color='blue')
+        ax2.set_ylabel('Precipitation')
+
+        ax1.grid(True)
+        ax2.grid(True)
+
+        canvas = FigureCanvasTkAgg(fig, master=self.root)
+        canvas.draw()
+        canvas.get_tk_widget().place(x=10, y=70, width=980, height=720)
 
 
 api_key = "112aff8f7d04491cb93204822231906"
