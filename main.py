@@ -1,14 +1,13 @@
 from datetime import datetime
 from tkinter import ttk
-
 import requests
 import tkinter as tk
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
-
 class WeatherForecast:
     def __init__(self, api_key):
+        # Initialize variables and GUI elements
         self.combobox = None
         self.radio = None
         self.root = tk.Tk()
@@ -26,6 +25,7 @@ class WeatherForecast:
         self.api_key = api_key
 
     def get_forecast_month(self, location, month):
+        # Retrieve weather forecast for a specific location and month
         current_month = datetime.now().month
         if current_month >= month:
             year = 2024
@@ -38,6 +38,7 @@ class WeatherForecast:
             response = requests.get(url)
             if response.status_code == 200:
                 data = response.json()
+                # Extract relevant weather information
                 date = data['forecast']['forecastday'][0]['date']
                 maxtemp_c = data['forecast']['forecastday'][0]['day']['maxtemp_c']
                 maxtemp_f = data['forecast']['forecastday'][0]['day']['maxtemp_f']
@@ -49,6 +50,7 @@ class WeatherForecast:
         return weather
 
     def get_forecast_day(self, location):
+        # Retrieve weather forecast for a specific location for the next day
         weather = {}
         url = f"http://api.weatherapi.com/v1/forecast.json?key={self.api_key}&q={location}&days=1&aqi=no&alerts=no"
         response = requests.get(url)
@@ -72,6 +74,7 @@ class WeatherForecast:
         return weather
 
     def build_giu(self):
+        # Build the main GUI interface
         for widget in self.root.winfo_children():
             widget.destroy()
 
@@ -87,6 +90,7 @@ class WeatherForecast:
         self.root.mainloop()
 
     def weather_day_gui(self):
+        # Build the GUI for displaying weather forecast for a day
         for widget in self.root.winfo_children():
             widget.destroy()
 
@@ -102,7 +106,7 @@ class WeatherForecast:
         self.radio = tk.Radiobutton(self.root, text="km c", variable=self.radio_var, value='km', font=("Arial", 15))
         self.radio.place(x=300, y=10)
 
-        self.radio = tk.Radiobutton(self.root, text="milles f", variable=self.radio_var, value='milles',
+        self.radio = tk.Radiobutton(self.root, text="miles f", variable=self.radio_var, value='miles',
                                     font=("Arial", 15))
         self.radio.place(x=300, y=35)
 
@@ -110,6 +114,7 @@ class WeatherForecast:
         self.entry.place(x=60, y=25, width=220)
 
     def show_weather_day(self):
+        # Display weather forecast for a day
         location = self.entry.get()
 
         data = self.get_forecast_day(location)
