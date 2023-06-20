@@ -13,8 +13,8 @@ class WeatherForecast:
         self.entry = None
         self.radio_var = tk.StringVar()
         self.radio_var.set('km c')
-        self.window_width = 800
-        self.window_height = 600
+        self.window_width = 1000
+        self.window_height = 800
         self.root.geometry(f"{self.window_width}x{self.window_height}")
         self.root.title("Weather")
         self.api_key = api_key
@@ -87,45 +87,80 @@ class WeatherForecast:
             widget.destroy()
 
         self.button = tk.Button(self.root, text="Menu", font=("Arial", 15), command=self.build_giu)
-        self.button.place(x=640, y=10, width=150, height=50)
+        self.button.place(x=840, y=10, width=150, height=50)
 
         self.button = tk.Button(self.root, text="Show", font=("Arial", 15), command=self.show_weather_day)
-        self.button.place(x=480, y=10, width=150, height=50)
+        self.button.place(x=680, y=10, width=150, height=50)
 
         self.label = tk.Label(self.root, text="City: ", font=("Arial", 15))
         self.label.place(x=10, y=25)
 
         self.radio = tk.Radiobutton(self.root, text="km c", variable=self.radio_var, value='km', font=("Arial", 15))
-        self.radio.place(x=350, y=10)
+        self.radio.place(x=300, y=10)
 
         self.radio = tk.Radiobutton(self.root, text="milles f", variable=self.radio_var, value='milles',
                                     font=("Arial", 15))
-        self.radio.place(x=350, y=40)
+        self.radio.place(x=300, y=35)
 
         self.entry = tk.Entry(self.root, font=("Arial", 15))
-        self.entry.place(x=100, y=25, width=220)
+        self.entry.place(x=60, y=25, width=220)
 
     def show_weather_day(self):
         location = self.entry.get()
 
         data = self.get_forecast_day(location)
 
-        time = [d[-5] for d in list(data.keys())]
-        temp = [data.get(d)[0] for d in data]
-        wind = [data.get(d)[2] for d in data]
-        pressure = [data.get(d)[4] for d in data]
-        precip = [data.get(d)[7] for d in data]
+        time = [d[-5:-3] for d in list(data.keys())]
         humidity = [data.get(d)[8] for d in data]
-        feelslike = [data.get(d)[9] for d in data]
-        vis = [data.get(d)[10] for d in data]
-        print(time)
-        print(temp)
-        print(wind)
-        print(pressure)
-        print(precip)
-        print(humidity)
-        print(feelslike)
-        print(vis)
+
+        if 'km' in self.radio_var.get():
+            temp = [data.get(d)[0] for d in data]
+            wind = [data.get(d)[2] for d in data]
+            pressure = [data.get(d)[4] for d in data]
+            precip = [data.get(d)[7] for d in data]
+            feelslike = [data.get(d)[9] for d in data]
+        else:
+            temp = [data.get(d)[1] for d in data]
+            wind = [data.get(d)[3] for d in data]
+            pressure = [data.get(d)[5] for d in data]
+            precip = [data.get(d)[6] for d in data]
+            feelslike = [data.get(d)[10] for d in data]
+
+        fig = Figure(figsize=(8, 6), dpi=80)
+        ax1 = fig.add_subplot(2, 2, 1)
+        ax2 = fig.add_subplot(2, 2, 2)
+        ax3 = fig.add_subplot(2, 2, 3)
+        ax4 = fig.add_subplot(2, 2, 4)
+
+        ax1.plot(time, temp, label='Temperature')
+        ax1.plot(time, feelslike, label='Feeling temperature')
+        ax1.set_xlabel('Time')
+        ax1.set_ylabel('Temperature')
+        ax1.set_title('Temperature and Feeling temperature')
+        ax1.legend()
+
+        ax2.plot(time, wind, label='Wind Speed')
+        ax2.set_xlabel('Time')
+        ax2.set_ylabel('Wind Speed')
+        ax2.set_title('Wind Speed')
+        ax2.legend()
+
+        ax3.plot(time, pressure, label='Atmospheric pressure')
+        ax3.set_xlabel('Time')
+        ax3.set_ylabel('Pressure')
+        ax3.set_title('Atmospheric pressure')
+        ax3.legend()
+
+        ax4.plot(time, precip, label='Precipitation')
+        ax4.plot(time, humidity, label='Humidity')
+        ax4.set_xlabel('Time')
+        ax4.set_ylabel('Value')
+        ax4.set_title('Precipitation and humidity')
+        ax4.legend()
+
+        canvas = FigureCanvasTkAgg(fig, master=self.root)
+        canvas.draw()
+        canvas.get_tk_widget().place(x=10, y=70, width=980, height=720)
 
     def show_weather_month(self):
         for widget in self.root.winfo_children():
@@ -133,7 +168,6 @@ class WeatherForecast:
 
 
 api_key = "112aff8f7d04491cb93204822231906"
-location = "Wroclaw"
 
 weather_forecast = WeatherForecast(api_key)
 weather_forecast.build_giu()
