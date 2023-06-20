@@ -7,8 +7,8 @@ class WeatherForecast:
 
     def get_forecast_month(self, location, date):
         weather = {}
-        for d in date:
-            url = f"http://api.weatherapi.com/v1/future.json?key={self.api_key}&q={location}&dt={d}"
+        for day in date:
+            url = f"http://api.weatherapi.com/v1/future.json?key={self.api_key}&q={location}&dt={day}"
             response = requests.get(url)
             if response.status_code == 200:
                 data = response.json()
@@ -28,17 +28,36 @@ class WeatherForecast:
                                  totalprecip_mm, totalprecip_in, avgvis_km, avgvis_miles, avghumidity)
         return weather
 
+    def get_forecast_day(self, location):
+        weather = {}
+        url = f"http://api.weatherapi.com/v1/forecast.json?key={self.api_key}&q={location}&days=1&aqi=no&alerts=no"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            for hour in data["forecast"]['forecastday'][0]['hour']:
+                print(hour)
+                time = hour['time']
+                temp_c = hour['temp_c']
+                temp_f = hour['temp_f']
+                wind_mph = hour['condition']['wind_mph']
+                wind_kph = hour['condition']['mintemp_f']
+                pressure_mb = hour['condition']['totalprecip_mm']
+                pressure_in = hour['condition']['totalprecip_in']
+                precip_mm = hour['condition']['avgvis_km']
+                precip_in = hour['condition']['avgvis_miles']
+                humidity = hour['condition']['humidity']
+                feelslike_c = hour['condition']['feelslike_c']
+                feelslike_f = hour['condition']['feelslike_f']
+                vis_km = hour['condition']['vis_km']
+                vis_miles = hour['condition']['vis_miles']
+                weather[time] = (temp_c, temp_f, wind_kph, wind_mph, pressure_mb, pressure_in, precip_in,
+                                 precip_mm, humidity, feelslike_c, feelslike_f, vis_km, vis_miles)
+        return weather
+
 
 api_key = "112aff8f7d04491cb93204822231906"
 location = "Wroclaw"
-date = []
-year = 2023
-month = 7
-for day in range(1, 5, 1):
-    date.append(f'{year}-{month}-{day}')
+
 weather_forecast = WeatherForecast(api_key)
-weather_forecast.get_forecast_month(location, date)
-data = {}
-data['13'] = (1, 2, 3, 4)
-data['3'] = ("2", 2, 3, 4)
-print(list(data.values()))
+# weather_forecast.get_forecast_month(location, date)
+weather_forecast.get_forecast_day(location)
