@@ -1,13 +1,13 @@
-from datetime import datetime
 from tkinter import ttk
-import requests
 import tkinter as tk
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from logic import WeatherForecast
 
-class WeatherForecast:
+
+class WeatherInterface:
     def __init__(self, api_key):
-        # Initialize variables and GUI elements
+        self.weather_forecast = WeatherForecast(api_key)
         self.combobox = None
         self.radio = None
         self.root = tk.Tk()
@@ -21,59 +21,9 @@ class WeatherForecast:
         self.window_width = 1000
         self.window_height = 800
         self.root.geometry(f"{self.window_width}x{self.window_height}")
-        self.root.title("Weather")
-        self.api_key = api_key
+        self.root.title("WeatherApp")
 
-    def get_forecast_month(self, location, month):
-        # Retrieve weather forecast for a specific location and month
-        current_month = datetime.now().month
-        if current_month >= month:
-            year = 2024
-        else:
-            year = 2023
-        date = [f"{year}-{month}-{i}" for i in range(1, 32, 1)]
-        weather = {}
-        for day in date:
-            url = f"http://api.weatherapi.com/v1/future.json?key={self.api_key}&q={location}&dt={day}"
-            response = requests.get(url)
-            if response.status_code == 200:
-                data = response.json()
-                # Extract relevant weather information
-                date = data['forecast']['forecastday'][0]['date']
-                maxtemp_c = data['forecast']['forecastday'][0]['day']['maxtemp_c']
-                maxtemp_f = data['forecast']['forecastday'][0]['day']['maxtemp_f']
-                mintemp_c = data['forecast']['forecastday'][0]['day']['mintemp_c']
-                mintemp_f = data['forecast']['forecastday'][0]['day']['mintemp_f']
-                totalprecip_mm = data['forecast']['forecastday'][0]['day']['totalprecip_mm']
-                totalprecip_in = data['forecast']['forecastday'][0]['day']['totalprecip_in']
-                weather[date] = (maxtemp_c, maxtemp_f, mintemp_c, mintemp_f, totalprecip_mm, totalprecip_in)
-        return weather
-
-    def get_forecast_day(self, location):
-        # Retrieve weather forecast for a specific location for the next day
-        weather = {}
-        url = f"http://api.weatherapi.com/v1/forecast.json?key={self.api_key}&q={location}&days=1&aqi=no&alerts=no"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            for hour in data["forecast"]['forecastday'][0]['hour']:
-                time = hour['time']
-                temp_c = hour['temp_c']
-                temp_f = hour['temp_f']
-                wind_mph = hour['wind_mph']
-                wind_kph = hour['wind_kph']
-                pressure_mb = hour['pressure_mb']
-                pressure_in = hour['pressure_in']
-                precip_mm = hour['precip_mm']
-                precip_in = hour['precip_in']
-                humidity = hour['humidity']
-                feelslike_c = hour['feelslike_c']
-                feelslike_f = hour['feelslike_f']
-                weather[time] = (temp_c, temp_f, wind_kph, wind_mph, pressure_mb, pressure_in, precip_in,
-                                 precip_mm, humidity, feelslike_c, feelslike_f)
-        return weather
-
-    def build_giu(self):
+    def build_gui(self):
         # Build the main GUI interface
         for widget in self.root.winfo_children():
             widget.destroy()
@@ -94,7 +44,7 @@ class WeatherForecast:
         for widget in self.root.winfo_children():
             widget.destroy()
 
-        self.button = tk.Button(self.root, text="Menu", font=("Arial", 15), command=self.build_giu)
+        self.button = tk.Button(self.root, text="Menu", font=("Arial", 15), command=self.build_gui)
         self.button.place(x=840, y=10, width=150, height=50)
 
         self.button = tk.Button(self.root, text="Show", font=("Arial", 15), command=self.show_weather_day)
@@ -103,10 +53,10 @@ class WeatherForecast:
         self.label = tk.Label(self.root, text="City: ", font=("Arial", 15))
         self.label.place(x=10, y=25)
 
-        self.radio = tk.Radiobutton(self.root, text="km c", variable=self.radio_var, value='km', font=("Arial", 15))
+        self.radio = tk.Radiobutton(self.root, text="km °c", variable=self.radio_var, value='km', font=("Arial", 15))
         self.radio.place(x=300, y=10)
 
-        self.radio = tk.Radiobutton(self.root, text="miles f", variable=self.radio_var, value='miles',
+        self.radio = tk.Radiobutton(self.root, text="miles °f", variable=self.radio_var, value='miles',
                                     font=("Arial", 15))
         self.radio.place(x=300, y=35)
 
@@ -117,7 +67,7 @@ class WeatherForecast:
         # Display weather forecast for a day
         location = self.entry.get()
 
-        data = self.get_forecast_day(location)
+        data = weather_forecast.get_forecast_day(location)
 
         time = [d[-5:-3] for d in list(data.keys())]
         humidity = [data.get(d)[8] for d in data]
@@ -175,7 +125,7 @@ class WeatherForecast:
         for widget in self.root.winfo_children():
             widget.destroy()
 
-        self.button = tk.Button(self.root, text="Menu", font=("Arial", 15), command=self.build_giu)
+        self.button = tk.Button(self.root, text="Menu", font=("Arial", 15), command=self.build_gui)
         self.button.place(x=840, y=10, width=150, height=50)
 
         self.button = tk.Button(self.root, text="Show", font=("Arial", 15), command=self.show_weather_month)
@@ -184,10 +134,10 @@ class WeatherForecast:
         self.label = tk.Label(self.root, text="City: ", font=("Arial", 15))
         self.label.place(x=10, y=25)
 
-        self.radio = tk.Radiobutton(self.root, text="km c", variable=self.radio_var, value='km', font=("Arial", 15))
+        self.radio = tk.Radiobutton(self.root, text="km °c", variable=self.radio_var, value='km', font=("Arial", 15))
         self.radio.place(x=300, y=10)
 
-        self.radio = tk.Radiobutton(self.root, text="milles f", variable=self.radio_var, value='milles',
+        self.radio = tk.Radiobutton(self.root, text="milles °f", variable=self.radio_var, value='milles',
                                     font=("Arial", 15))
         self.radio.place(x=300, y=35)
 
@@ -198,6 +148,8 @@ class WeatherForecast:
         self.combobox['value'] = ('January', 'February', 'March', 'April', 'May', 'June',
                                   'July', 'August', 'September', 'October', 'November', 'December')
         self.combobox.place(x=410, y=25)
+
+        self.root.mainloop()
 
     def show_weather_month(self):
         month_dict = {
@@ -217,7 +169,7 @@ class WeatherForecast:
 
         month = month_dict[self.selected_value.get()]
         location = self.entry.get()
-        data = self.get_forecast_month(location, month)
+        data = weather_forecast.get_forecast_month(location, month)
 
         time = [d[-2:] for d in list(data.keys())]
 
@@ -249,7 +201,9 @@ class WeatherForecast:
         canvas.get_tk_widget().place(x=10, y=70, width=980, height=720)
 
 
-api_key = "112aff8f7d04491cb93204822231906"
-
-weather_forecast = WeatherForecast(api_key)
-weather_forecast.build_giu()
+if __name__ == "__main__":
+    api_key = "112aff8f7d04491cb93204822231906"
+    weather_forecast = WeatherForecast(api_key)
+    weather_interface = WeatherInterface(weather_forecast)
+    print(weather_forecast.get_forecast_day("Wroclaw"))
+    weather_interface.build_gui()
